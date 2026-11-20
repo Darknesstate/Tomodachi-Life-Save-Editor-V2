@@ -8,8 +8,8 @@ jobs:
     container:
       image: devkitpro/devkitarm:latest
     steps:
-            - uses: actions/checkout@v4
-            - name: Tools
+      - uses: actions/checkout@v4
+      - name: Tools
         run: |
           mkdir -p $HOME/cia-tools
           curl -fL https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip -o /tmp/b.zip
@@ -19,14 +19,18 @@ jobs:
           chmod +x $HOME/cia-tools/bannertool $HOME/cia-tools/makerom
           echo $HOME/cia-tools >> $GITHUB_PATH
           ls -lh $HOME/cia-tools
-            - name: Build
+      - name: Build
         run: |
           export PATH=$HOME/cia-tools:$PATH
           make
-            - uses: actions/upload-artifact@v4
+          ls -lh build
+      - uses: actions/upload-artifact@v4
         with:
           name: Tomodachi-V2
           path: |
+            build/*.3dsx
+            build/*.smdh
+            build/*.cia
             *.3dsx
             *.smdh
             *.cia
