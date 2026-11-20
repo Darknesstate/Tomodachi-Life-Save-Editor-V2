@@ -1,9 +1,9 @@
 # Tomodachi Life Save Editor V2 - cria o som sozinho, sem baixar nada
-# Arquivo: .github/workflows/build.yml - REVISADO
+# Arquivo: .github/workflows/build.yml - CORRIGIDO on com aspas
 name: Build 3DS
-on:
+"on":
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   workflow_dispatch:
 jobs:
   build:
