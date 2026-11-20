@@ -1,5 +1,7 @@
-name: build
-on: [push]
+name: CI
+on:
+  push:
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -7,9 +9,20 @@ jobs:
       image: devkitpro/devkitarm:latest
     steps:
             - uses: actions/checkout@v4
+            - name: Instalar makerom e bannertool
+        run: |
+          mkdir -p $HOME/cia-tools
+          curl -fL https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip -o /tmp/bannertool.zip
+          unzip -j -o /tmp/bannertool.zip -d $HOME/cia-tools
+          curl -fL https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.17/makerom-v0.17-ubuntu_x86_64.zip -o /tmp/makerom.zip
+          unzip -j -o /tmp/makerom.zip -d $HOME/cia-tools
+          chmod +x $HOME/cia-tools/bannertool $HOME/cia-tools/makerom
+          echo "$HOME/cia-tools" >> $GITHUB_PATH
+          ls -lh $HOME/cia-tools
             - name: Build
         run: |
           python3 -c "import wave; w=wave.open('assets/sound.wav','wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050); w.writeframes(b'\x00\x00'*66150); w.close()"
+          export PATH="$HOME/cia-tools:$PATH"
           make
             - uses: actions/upload-artifact@v4
         with:
