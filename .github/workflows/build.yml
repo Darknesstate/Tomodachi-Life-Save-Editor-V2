@@ -1,23 +1,20 @@
-name: Build 3DS
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+name: build
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
       image: devkitpro/devkitarm:latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build .3dsx
+            - uses: actions/checkout@v4
+            - name: Build .3dsx
         run: |
+          python3 -c "import math,wave,struct; w=wave.open('assets/sound.wav','wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050); d=b''.join(struct.pack('<h',int(12000*math.sin(2*math.pi*(523 if i<11025 else 659 if i<22050 else 784)*i/22050))) for i in range(66150)); w.writeframes(d); w.close()"
           make -j$(nproc)
-      - name: Upload .3dsx
-        uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v4
         with:
-          name: TomodachiLifeSaveEditorV2-3DS
+          name: Tomodachi-V2
           path: |
             *.3dsx
             *.smdh
+            *.cia
