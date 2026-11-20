@@ -1,5 +1,6 @@
 name: build
-on: [push]
+"on":
+  push:
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -7,10 +8,18 @@ jobs:
       image: devkitpro/devkitarm:latest
     steps:
             - uses: actions/checkout@v4
-            - name: Build .3dsx
+            - name: Build
         run: |
-          python3 -c "import math,wave,struct; w=wave.open('assets/sound.wav','wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050); d=b''.join(struct.pack('<h',int(12000*math.sin(2*math.pi*(523 if i<11025 else 659 if i<22050 else 784)*i/22050))) for i in range(66150)); w.writeframes(d); w.close()"
-          make -j$(nproc)
+          python3 << 'PY'
+          import wave
+          w = wave.open('assets/sound.wav', 'wb')
+          w.setnchannels(1)
+          w.setsampwidth(2)
+          w.setframerate(22050)
+          w.writeframes(b'\x00\x00' * 66150)
+          w.close()
+          PY
+          make
             - uses: actions/upload-artifact@v4
         with:
           name: Tomodachi-V2
