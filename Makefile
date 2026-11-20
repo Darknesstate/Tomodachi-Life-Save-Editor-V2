@@ -1,5 +1,6 @@
 # Tomodachi Life Save Editor V2 by Darkness Metal
-# ESQUELETO da versao pronta - Arquivo: Makefile - colar na RAIZ
+# CORRIGIDO: so .3dsx primeiro, sem .cia no all, sem -mtp=soft no LDFLAGS
+# Arquivo: Makefile - colar na RAIZ
 
 TARGET		:=	TomodachiLifeSaveEditorV2
 BUILD		:=	build
@@ -26,7 +27,9 @@ CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
 CXXFLAGS	:=	$(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+
+# CORRIGIDO: sem $(ARCH) aqui, era isso que dava tp=soft no ld
+LDFLAGS	=	-specs=3dsx.specs -g -Wl,-Map,$(notdir $*.map)
 
 LIBS	:=	-lcitro2d -lcitro3d -lctru -lm
 
@@ -38,7 +41,8 @@ include $(DEVKITARM)/3ds_rules
 
 .PHONY: all clean
 
-all: $(TARGET).3dsx $(TARGET).cia $(TARGET).smdh
+# CORRIGIDO: so .3dsx + .smdh no all, .cia vem depois que o .3dsx funcionar
+all: $(TARGET).3dsx $(TARGET).smdh
 
 clean:
 	@echo clean ...
