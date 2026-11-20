@@ -1,31 +1,71 @@
-# Tomodachi Life Save Editor V2
-# ESQUELETO da versao pronta - mesmo build que ja funcionou
-# Arquivo: .github/workflows/build.yml
+# Tomodachi Life Save Editor V2 - cria o som sozinho, sem baixar nada
+# Arquivo: .github/workflows/build.yml - REVISADO
 name: Build 3DS
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
       image: devkitpro/devkitarm:latest
     steps:
-      - name: Checkout
+            - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Build .3dsx + .cia
+            - name: Criar sound.wav + Build .3dsx
         run: |
+          mkdir -p assets
+          cat > /tmp/make_sound.py << 'PY'
+          import math, wave, struct
+          SR = 44100
+          melodia = [
+              (523.25, 0.22),
+              (659.25, 0.22),
+              (783.99, 0.22),
+              (1046.50, 0.35),
+              (783.99, 0.18),
+              (659.25, 0.18),
+              (783.99, 0.22),
+              (880.00, 0.35),
+              (1046.50, 0.22),
+              (1174.66, 0.22),
+              (1046.50, 0.45),
+              (783.99, 0.22),
+              (659.25, 0.22),
+              (523.25, 0.55),
+          ]
+          def nota(freq, dur):
+              n = int(SR * dur)
+              out = []
+              for i in range(n):
+                  t = i / SR
+                  v = math.sin(2 * math.pi * freq * t) * 0.6
+                  v += math.sin(2 * math.pi * freq * 2 * t) * 0.2
+                  v += math.sin(2 * math.pi * freq * 3 * t) * 0.08
+                  fade = min(1.0, i / (SR * 0.02), (n - i) / (SR * 0.05))
+                  v *= fade * 0.7
+                  out.append(int(v * 32767))
+              return out
+          som = []
+          for freq, dur in melodia:
+              som.extend(nota(freq, dur))
+          som.extend([0] * int(SR * 0.15))
+          with wave.open("assets/sound.wav", "w") as w:
+              w.setnchannels(1)
+              w.setsampwidth(2)
+              w.setframerate(SR)
+              for s in som:
+                  w.writeframes(struct.pack("<h", s))
+          print("sound.wav criado!")
+          PY
+          python3 /tmp/make_sound.py
+          ls -lh assets/sound.wav
           make -j$(nproc)
-
-      - name: Upload .3dsx e .cia
+            - name: Upload .3dsx
         uses: actions/upload-artifact@v4
         with:
           name: TomodachiLifeSaveEditorV2-3DS
           path: |
             *.3dsx
-            *.cia
             *.smdh
