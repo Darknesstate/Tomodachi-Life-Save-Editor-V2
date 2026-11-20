@@ -1,6 +1,6 @@
 # Tomodachi Life Save Editor V2 by Darkness Metal
-# Makefile OFICIAL devkitPro - revisado, com som automatico
-# Arquivo: Makefile - colar na RAIZ
+# Makefile OFICIAL devkitPro - SEMPRE .3dsx + .smdh + .cia
+# Arquivo: Makefile - colar na RAIZ - REVISADO 5x
 .SUFFIXES:
 
 ifeq ($(strip $(DEVKITARM)),)
@@ -25,6 +25,8 @@ APP_AUDIO := assets/sound.wav
 ICON := assets/icon.png
 BANNER := assets/banner.png
 BANNER_AUDIO := assets/sound.wav
+MAKEROM := makerom
+BANNERTOOL := bannertool
 
 ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 CFLAGS := -g -Wall -O2 -mword-relocations \
@@ -70,12 +72,20 @@ $(BUILD):
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(TARGET).cia banner.bnr icon.icn
 else
 DEPENDS := $(OFILES:.o=.d)
+.PHONY: all
+all: $(OUTPUT).3dsx $(OUTPUT).smdh $(OUTPUT).cia
 $(OUTPUT).3dsx : $(OUTPUT).elf
 $(OUTPUT).elf : $(OFILES)
 $(OUTPUT).smdh : $(OUTPUT).elf
+banner.bnr: $(TOPDIR)/assets/banner.png $(TOPDIR)/assets/sound.wav
+	@$(BANNERTOOL) makebanner -i $(TOPDIR)/assets/banner.png -a $(TOPDIR)/assets/sound.wav -o banner.bnr
+icon.icn: $(TOPDIR)/assets/icon.png
+	@$(BANNERTOOL) makesmdh -s "$(APP_TITLE)" -l "$(APP_TITLE)" -p "$(APP_AUTHOR)" -i $(TOPDIR)/assets/icon.png -o icon.icn
+$(OUTPUT).cia: $(OUTPUT).elf banner.bnr icon.icn
+	@$(MAKEROM) -f cia -o $@ -rsf $(TOPDIR)/cia.rsf -target t -exefslogo -elf $(OUTPUT).elf -icon icon.icn -banner banner.bnr
 %.bin.o : %.bin
 	@echo $(notdir $<)
 	@$(bin2o)
