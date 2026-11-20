@@ -19,6 +19,57 @@ jobs:
           chmod +x $HOME/cia-tools/bannertool $HOME/cia-tools/makerom
           echo $HOME/cia-tools >> $GITHUB_PATH
           ls -lh $HOME/cia-tools
+      - name: AutoFix
+        run: |
+          ls -lh assets
+          file assets/icon.png
+          file assets/banner.png
+          sed -i s/0x00000000/0x40000/ cia.rsf
+          grep StackSize cia.rsf
+          python3 <<PYEOF
+          import struct, zlib, os, wave
+          def make_png(w,h,fn):
+              raw=b""
+              for y in range(h):
+                  raw+=b"\x00"
+                  for x in range(w):
+                      r,g,b=fn(x,y)
+                      raw+=bytes([r,g,b])
+              def chunk(t,data):
+                  c=struct.pack(">I",len(data))+t+data
+                  c+=struct.pack(">I",zlib.crc32(t+data) & 0xffffffff)
+                  return c
+              ihdr=struct.pack(">IIBBBBB",w,h,8,2,0,0,0)
+              png=b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",ihdr)+chunk(b"IDAT",zlib.compress(raw))+chunk(b"IEND",b"")
+              return png
+          def ok_png(path,w,h):
+              try:
+                  d=open(path,"rb").read()
+                  if d[:8]!=b"\x89PNG\r\n\x1a\n":
+                      return False
+                  ww,hh=struct.unpack(">II",d[16:24])
+                  return ww==w and hh==h
+              except Exception:
+                  return False
+          if not ok_png("assets/icon.png",48,48):
+              open("assets/icon.png","wb").write(make_png(48,48,lambda x,y:(140,30,180) if 20<=x<28 and 10<=y<38 else (10,10,18)))
+              print("icon recriado")
+          if not ok_png("assets/banner.png",256,128):
+              open("assets/banner.png","wb").write(make_png(256,128,lambda x,y:(30,30,40) if y<100 else (140,30,180)))
+              print("banner recriado")
+          if not os.path.exists("assets/sound.wav"):
+              wf=wave.open("assets/sound.wav","wb")
+              wf.setnchannels(1)
+              wf.setsampwidth(2)
+              wf.setframerate(22050)
+              wf.writeframes(b"\x00\x00"*22050)
+              wf.close()
+              print("sound criado")
+          PYEOF
+          ls -lh assets
+          file assets/icon.png
+          file assets/banner.png
+          file assets/sound.wav
       - name: Build
         run: |
           export PATH=$HOME/cia-tools:$PATH
