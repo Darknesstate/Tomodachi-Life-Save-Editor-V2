@@ -1,6 +1,5 @@
 name: build
-"on":
-  push:
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,15 +9,7 @@ jobs:
             - uses: actions/checkout@v4
             - name: Build
         run: |
-          python3 << 'PY'
-          import wave
-          w = wave.open('assets/sound.wav', 'wb')
-          w.setnchannels(1)
-          w.setsampwidth(2)
-          w.setframerate(22050)
-          w.writeframes(b'\x00\x00' * 66150)
-          w.close()
-          PY
+          python3 -c "import wave; w=wave.open('assets/sound.wav','wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050); w.writeframes(b'\x00\x00'*66150); w.close()"
           make
             - uses: actions/upload-artifact@v4
         with:
