@@ -1,0 +1,41 @@
+BasicInfo:
+  Title : "Tomodachi Life Save Editor V2"
+  CompanyCode : "00"
+  ProductCode : "CTR-P-TLSE"
+  ContentType : Application
+  Logo : Nintendo
+TitleInfo:
+  UniqueId : 0x12345
+  Category : Application
+Option:
+  UseOnSD : true
+  EnableCompress : true
+  FreeProductCode : true
+  EnableCrypt : false
+  MediaFootPadding : false
+AccessControlInfo:
+  FileSystemAccess:
+    - DirectSdmc
+    - Core
+  IdealProcessor : 0
+  AffinityMask : 1
+  Priority : 16
+  MaxCpu : 0x9E
+  DisableDebug : false
+  EnableForceDebug : false
+  CanWriteSharedPage : false
+  CanUsePrivilegedPriority : false
+  CanUseNonAlphabetAndNumber : false
+  PermitMainFunctionArgument : false
+  CanShareDeviceMemory : false
+  RunnableOnSleep : false
+  SpecialMemoryArrange : false
+  UseOtherVariationSaveData : false
+  CoreVersion : 2
+  DescVersion : 2
+  MemoryType : Application
+  HandleTableSize: 512
+SystemControlInfo:
+  SaveDataSize: 1M
+  RemasterVersion: 0000
+  StackSize: 0x00000000
