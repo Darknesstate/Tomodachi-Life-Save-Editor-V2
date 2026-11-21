@@ -27,6 +27,7 @@ jobs:
           cp /tmp/3dstools/cxitool /opt/devkitpro/tools/bin/cxitool || true
           chmod +x $HOME/cia-tools/cxitool || true
           which bannertool || true
+          ls -lh /opt/devkitpro/tools/bin/bannertool || true
           which makerom || true
           which cxitool || true
       - name: AutoFix
@@ -58,14 +59,18 @@ jobs:
           echo DSX=$DSX >> makerom.log
           echo SMDH=$SMDH >> makerom.log
           ls -lh build || true
-          test -f build/TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr 2>&1 | tee -a makerom.log || bannertool makebanner -i assets/banner.png -o build/banner.bnr 2>&1 | tee -a makerom.log || true
+          bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr >> makerom.log 2>&1 || bannertool makebanner -i assets/banner.png -o build/banner.bnr >> makerom.log 2>&1 || echo SEM-BANNER >> makerom.log
           ls -lh build/banner.bnr || true
-          echo METODO1-MAKEROM-RSF >> makerom.log
-          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH -banner build/banner.bnr 2>&1 | tee -a makerom.log || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH 2>&1 | tee -a makerom.log || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF 2>&1 | tee -a makerom.log || true
+          echo METODO1-MAKEROM-SEM-BANNER >> makerom.log
+          makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH >> makerom.log 2>&1 || echo FALHOU-SEM-BANNER >> makerom.log
+          echo METODO1B-MAKEROM-COM-BANNER >> makerom.log
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH -banner build/banner.bnr >> makerom.log 2>&1 || echo FALHOU-COM-BANNER >> makerom.log
+          echo METODO1C-MAKEROM-SO-ELF >> makerom.log
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF >> makerom.log 2>&1 || echo FALHOU-SO-ELF >> makerom.log
           echo METODO2-CXITOOL >> makerom.log
-          test -f build/TomodachiLifeSaveEditorV2.cia || cxitool -t 0004000000133700 -n "Tomodachi Life Save Editor V2" -b assets/banner.png $DSX build/TomodachiLifeSaveEditorV2.cxi 2>&1 | tee -a makerom.log || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || cxitool -t 0004000000133700 -n "Tomodachi Life Save Editor V2" -b assets/banner.png $DSX build/TomodachiLifeSaveEditorV2.cxi >> makerom.log 2>&1 || echo FALHOU-CXITOOL >> makerom.log
           ls -lh build/*.cxi || true
-          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -target t -i build/TomodachiLifeSaveEditorV2.cxi:0:0 2>&1 | tee -a makerom.log || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -target t -i build/TomodachiLifeSaveEditorV2.cxi:0:0 >> makerom.log 2>&1 || echo FALHOU-MAKEROM-CXI >> makerom.log
           cat makerom.log || true
           ls -lh build/*.cia || true
           ls -lh build/*.cxi || true
