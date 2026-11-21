@@ -12,13 +12,23 @@ jobs:
       - name: Tools
         run: |
           pacman -Sy --noconfirm 3ds-bannertool || true
-          mkdir -p $HOME/cia-tools
+          mkdir -p $HOME/cia-tools /tmp/3dstools
           curl -fL https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.17/makerom-v0.17-ubuntu_x86_64.zip -o /tmp/m.zip
           unzip -j -o /tmp/m.zip -d $HOME/cia-tools
-          chmod +x $HOME/cia-tools/makerom
+          chmod +x $HOME/cia-tools/makerom || true
+          cp $HOME/cia-tools/makerom /opt/devkitpro/tools/bin/makerom || true
+          chmod +x /opt/devkitpro/tools/bin/makerom || true
           echo $HOME/cia-tools >> $GITHUB_PATH
+          echo /opt/devkitpro/tools/bin >> $GITHUB_PATH
+          git clone --depth 1 --branch cxi-stuff https://github.com/devkitPro/3dstools.git /tmp/3dstools || true
+          make -C /tmp/3dstools -j2 || true
+          ls -lh /tmp/3dstools/cxitool || true
+          cp /tmp/3dstools/cxitool $HOME/cia-tools/cxitool || true
+          cp /tmp/3dstools/cxitool /opt/devkitpro/tools/bin/cxitool || true
+          chmod +x $HOME/cia-tools/cxitool || true
           which bannertool || true
           which makerom || true
+          which cxitool || true
       - name: AutoFix
         run: |
           ls -lh assets
@@ -34,20 +44,31 @@ jobs:
           export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
           make || true
-          ls -lh build || true
-          ls -lh build/*.elf || true
-          ls -lh build/*.smdh || true
+          find . -name "*.elf" || true
+          find . -name "*.3dsx" || true
+          find . -name "*.smdh" || true
       - name: BuildCIA
         run: |
           export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
+          ELF=$(find . -name "TomodachiLifeSaveEditorV2.elf" | head -n 1)
+          DSX=$(find . -name "TomodachiLifeSaveEditorV2.3dsx" | head -n 1)
+          SMDH=$(find . -name "TomodachiLifeSaveEditorV2.smdh" | head -n 1)
+          echo ELF=$ELF > makerom.log
+          echo DSX=$DSX >> makerom.log
+          echo SMDH=$SMDH >> makerom.log
           ls -lh build || true
-          test -f build/TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr || bannertool makebanner -i assets/banner.png -o build/banner.bnr || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr 2>&1 | tee -a makerom.log || bannertool makebanner -i assets/banner.png -o build/banner.bnr 2>&1 | tee -a makerom.log || true
           ls -lh build/banner.bnr || true
-          ls -lh build/*.elf || true
-          ls -lh build/*.smdh || true
-          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/TomodachiLifeSaveEditorV2.smdh -banner build/banner.bnr || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/TomodachiLifeSaveEditorV2.smdh || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf || true
+          echo METODO1-MAKEROM-RSF >> makerom.log
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH -banner build/banner.bnr 2>&1 | tee -a makerom.log || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF -icon $SMDH 2>&1 | tee -a makerom.log || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf cia.rsf -target t -exefslogo -elf $ELF 2>&1 | tee -a makerom.log || true
+          echo METODO2-CXITOOL >> makerom.log
+          test -f build/TomodachiLifeSaveEditorV2.cia || cxitool -t 0004000000133700 -n "Tomodachi Life Save Editor V2" -b assets/banner.png $DSX build/TomodachiLifeSaveEditorV2.cxi 2>&1 | tee -a makerom.log || true
+          ls -lh build/*.cxi || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -target t -i build/TomodachiLifeSaveEditorV2.cxi:0:0 2>&1 | tee -a makerom.log || true
+          cat makerom.log || true
           ls -lh build/*.cia || true
+          ls -lh build/*.cxi || true
       - uses: actions/upload-artifact@v4
         with:
           name: Tomodachi-V2
@@ -56,6 +77,8 @@ jobs:
             build/*.3dsx
             build/*.smdh
             build/*.cia
+            build/*.cxi
+            makerom.log
             *.3dsx
             *.smdh
             *.cia
