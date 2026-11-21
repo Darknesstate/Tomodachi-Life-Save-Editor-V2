@@ -9,20 +9,44 @@ jobs:
       image: devkitpro/devkitarm:latest
     steps:
       - uses: actions/checkout@v4
+      - name: Tools
+        run: |
+          pacman -Sy --noconfirm 3ds-bannertool || true
+          mkdir -p $HOME/cia-tools
+          curl -fL https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.17/makerom-v0.17-ubuntu_x86_64.zip -o /tmp/m.zip
+          unzip -j -o /tmp/m.zip -d $HOME/cia-tools
+          chmod +x $HOME/cia-tools/makerom
+          echo $HOME/cia-tools >> $GITHUB_PATH
+          which bannertool || true
+          which makerom || true
+      - name: AutoFix
+        run: |
+          ls -lh assets
+          cat cia.rsf || true
+          sed -i s/StackSize:\ 0x00000000/StackSize:\ 0x40000/ cia.rsf
+          grep StackSize cia.rsf || true
+          rm -f assets/sound.wav
+          LC_ALL=C awk 'BEGIN{rate=22050;total=44100;printf "%c%c%c%c",82,73,70,70;sz=36+total*2;printf "%c%c%c%c",sz%256,int(sz/256)%256,int(sz/65536)%256,int(sz/16777216)%256;printf "%c%c%c%c",87,65,86,69;printf "%c%c%c%c",102,109,116,32;printf "%c%c%c%c",16,0,0,0;printf "%c%c",1,0;printf "%c%c",1,0;printf "%c%c%c%c",rate%256,int(rate/256)%256,0,0;printf "%c%c%c%c",(rate*2)%256,int(rate*2/256)%256,0,0;printf "%c%c",2,0;printf "%c%c",16,0;printf "%c%c%c%c",100,97,116,97;dsz=total*2;printf "%c%c%c%c",dsz%256,int(dsz/256)%256,int(dsz/65536)%256,int(dsz/16777216)%256;for(i=0;i<total;i++){t=i/rate;if(t<0.25)f=523;else if(t<0.5)f=659;else if(t<0.75)f=784;else if(t<1.25)f=1046;else if(t<1.5)f=784;else if(t<1.75)f=659;else f=523;s=int(12000*sin(2*3.14159265*f*i/rate));lo=s%256;if(lo<0)lo+=256;hi=int(s/256)%256;if(hi<0)hi+=256;printf "%c%c",lo,hi}}' > assets/sound.wav
+          ls -lh assets
+          od -An -tx1 -N 8 assets/sound.wav || true
       - name: Build
         run: |
-          export PATH=/opt/devkitpro/tools/bin:$PATH
+          export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
           make || true
           ls -lh build || true
+          ls -lh build/*.elf || true
+          ls -lh build/*.smdh || true
       - name: BuildCIA
         run: |
-          export PATH=/opt/devkitpro/tools/bin:$PATH
+          export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
           ls -lh build || true
-          ls -lh build/*.3dsx || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr || bannertool makebanner -i assets/banner.png -o build/banner.bnr || true
+          ls -lh build/banner.bnr || true
+          ls -lh build/*.elf || true
           ls -lh build/*.smdh || true
-          3dsxtool --cia=build/TomodachiLifeSaveEditorV2.cia build/TomodachiLifeSaveEditorV2.3dsx --smdh=build/TomodachiLifeSaveEditorV2.smdh || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/TomodachiLifeSaveEditorV2.smdh -banner build/banner.bnr || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/TomodachiLifeSaveEditorV2.smdh || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -DAPP_TITLE=TomodachiLifeSaveEditorV2 -DAPP_PRODUCT_CODE=CTR-P-TLSE -DAPP_UNIQUE_ID=0x1337 -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf || true
           ls -lh build/*.cia || true
       - uses: actions/upload-artifact@v4
         with:
