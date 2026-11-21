@@ -11,14 +11,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Tools
         run: |
+          pacman -Sy --noconfirm 3ds-bannertool || true
           mkdir -p $HOME/cia-tools
-          curl -fL https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip -o /tmp/b.zip
-          unzip -j -o /tmp/b.zip -d $HOME/cia-tools
           curl -fL https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.17/makerom-v0.17-ubuntu_x86_64.zip -o /tmp/m.zip
           unzip -j -o /tmp/m.zip -d $HOME/cia-tools
-          chmod +x $HOME/cia-tools/bannertool $HOME/cia-tools/makerom
+          chmod +x $HOME/cia-tools/makerom
           echo $HOME/cia-tools >> $GITHUB_PATH
-          ls -lh $HOME/cia-tools
+          which bannertool || true
+          which makerom || true
+          ls -lh /opt/devkitpro/tools/bin/bannertool || true
+          ls -lh $HOME/cia-tools/makerom || true
+          bannertool --help || true
+          makerom -help || true
       - name: AutoFix
         run: |
           ls -lh assets
@@ -32,22 +36,20 @@ jobs:
           od -An -tx1 -N 8 assets/sound.wav || true
       - name: Build
         run: |
-          export PATH=$HOME/cia-tools:$PATH
+          export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
           make || true
           ls -lh build || true
           ls -lh build/*.cia || echo CIA_AINDA_FALTOU
       - name: BuildCIA
         run: |
-          export PATH=$HOME/cia-tools:$PATH
+          export PATH=/opt/devkitpro/tools/bin:$HOME/cia-tools:$PATH
           set -x
           ls -lh build || true
-          test -f build/TomodachiLifeSaveEditorV2.cia || test -f TomodachiLifeSaveEditorV2.cia || echo TENTA_MANUAL
-          test -f build/TomodachiLifeSaveEditorV2.cia || test -f TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr || bannertool makebanner -i assets/banner.png -o build/banner.bnr || echo [STRIPPED 264 bytes] | base64 -d > /tmp/fb.png
-          test -f build/banner.bnr || bannertool makebanner -i /tmp/fb.png -o build/banner.bnr || true
+          test -f build/TomodachiLifeSaveEditorV2.cia || echo TENTA_MANUAL
+          test -f build/TomodachiLifeSaveEditorV2.cia || bannertool makebanner -i assets/banner.png -a assets/sound.wav -o build/banner.bnr || bannertool makebanner -i assets/banner.png -o build/banner.bnr || true
           ls -lh build/banner.bnr || true
-          test -f build/icon.icn || bannertool makesmdh -s TomodachiLifeSaveEditorV2 -l TomodachiLifeSaveEditorV2 -p DarknessMetal -i assets/icon.png -o build/icon.icn || cp build/TomodachiLifeSaveEditorV2.smdh build/icon.icn || echo [STRIPPED 176 bytes] | base64 -d > /tmp/fi.png
-          test -f build/icon.icn || bannertool makesmdh -s TomodachiLifeSaveEditorV2 -l TomodachiLifeSaveEditorV2 -p DarknessMetal -i /tmp/fi.png -o build/icon.icn || true
+          test -f build/icon.icn || bannertool makesmdh -s TomodachiLifeSaveEditorV2 -l TomodachiLifeSaveEditorV2 -p DarknessMetal -i assets/icon.png -o build/icon.icn || cp build/TomodachiLifeSaveEditorV2.smdh build/icon.icn || true
           ls -lh build/icon.icn || true
           ls -lh build/*.elf || true
           test -f build/TomodachiLifeSaveEditorV2.cia || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/icon.icn -banner build/banner.bnr || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf -icon build/icon.icn || makerom -f cia -o build/TomodachiLifeSaveEditorV2.cia -rsf cia.rsf -target t -exefslogo -elf build/TomodachiLifeSaveEditorV2.elf || true
