@@ -1,0 +1,25 @@
+BasicInfo:
+  Title: "Tomodachi Life Save Editor V2"
+  CompanyCode: "00"
+  ProductCode: "CTR-P-TLSE"
+  ContentType: "Application"
+  Logo: "Nintendo"
+
+TitleInfo:
+  UniqueId: 0xFF3D5
+  Category: "Application"
+
+CardInfo:
+  MediaSize: "128MB"
+  MediaType: "Card1"
+
+Option:
+  UseOnSD: true
+  EnableCompress: true
+  FreeProductCode: true
+  EnableCrypt: false
+  EnableCrr: false
+
+AccessControlInfo:
+  UseExtSaveData: true
+  UseSaveData: true
