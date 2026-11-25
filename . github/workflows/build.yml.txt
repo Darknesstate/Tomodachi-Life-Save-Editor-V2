@@ -1,0 +1,53 @@
+# V2 NOVO - makerom RetroArch - SEM Project_CTR - se nao tem essa linha, e o velho
+name: Build Tomodachi V2
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: devkitpro/devkitarm:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build 3DSX e SMDH
+        run: make
+
+      - name: Instalar bannertool e makerom
+        run: |
+          curl -fL https://github.com/Epicpkmn11/bannertool/releases/download/v1.2.2/bannertool.zip -o /tmp/bannertool.zip
+          python3 -m zipfile -e /tmp/bannertool.zip /tmp/bannertool
+          cp /tmp/bannertool/linux-x86_64/bannertool /usr/local/bin/bannertool
+          chmod +x /usr/local/bin/bannertool
+          curl -fL https://raw.githubusercontent.com/libretro/RetroArch/master/ctr/tools/makerom-linux -o /usr/local/bin/makerom
+          chmod +x /usr/local/bin/makerom
+          ls -l /usr/local/bin/bannertool /usr/local/bin/makerom
+
+      - name: Build CIA
+        run: |
+          ls -l
+          ls -l TomodachiReal.rsf
+          BANNER=$(find . -maxdepth 2 -name "banner.png" | head -n 1)
+          ICON=$(find . -maxdepth 2 -name "icon.png" | head -n 1)
+          echo "BANNER=$BANNER ICON=$ICON"
+          mkdir -p build
+          python3 -c "import wave,struct; w=wave.open('build/silent.wav','wb'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(22050); w.writeframes(struct.pack('<h',0)*22050); w.close()"
+          bannertool makebanner -i "$BANNER" -a build/silent.wav -o build/banner.bnr
+          bannertool makesmdh -s "Tomodachi Life Save Editor V2" -l "Tomodachi Life Save Editor V2" -p "Darkness Metal" -i "$ICON" -o build/icon.icn
+          ls -l build/banner.bnr build/icon.icn
+          ELF=$(find . -maxdepth 3 -name "*.elf" | head -n 1)
+          echo "ELF=$ELF"
+          ls -l "$ELF"
+          makerom -f cia -o TomodachiLifeSaveEditorV2.cia -DAPP_ENCRYPTED=false -rsf TomodachiReal.rsf -target t -exefslogo -elf "$ELF" -icon build/icon.icn -banner build/banner.bnr -major 1 -minor 0 -micro 0
+          ls -lh *.cia *.3dsx *.smdh
+
+      - name: Upload artefato
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: TomodachiLifeSaveEditorV2
+          path: |
+            *.3dsx
+            *.smdh
+            *.cia
