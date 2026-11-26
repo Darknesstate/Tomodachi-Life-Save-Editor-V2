@@ -8,7 +8,7 @@ DATA := data
 INCLUDES := include
 
 APP_TITLE := Tomodachi Life Save Editor V2
-APP_DESCRIPTION := Dinheiro Max no Tomodachi Life
+APP_DESCRIPTION := Adicionar Tudo - By Darkness Metal
 APP_AUTHOR := Darkness Metal
 APP_ICON := icon.png
 
@@ -19,8 +19,7 @@ INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS
 LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 CFLAGS := -g -O2 -w -mword-relocations -ffunction-sections -fdata-sections $(ARCH)
-CFLAGS += -Wno-error -Wno-format -Wno-int-conversion -Wno-misleading-indentation -Wno-unused-parameter -Wno-unused-variable
-CFLAGS += $(INCLUDE) -D__3DS__ -DARM11 -D_3DS
+CFLAGS += -Wno-error $(INCLUDE) -D__3DS__ -DARM11 -D_3DS
 
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 ASFLAGS := -g $(ARCH)
